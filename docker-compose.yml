@@ -1,0 +1,38 @@
+version: '3.8'
+
+# Demo setup: ES 7.17 (source) + OpenSearch 2.19 (target)
+# Usage:
+#   docker compose up -d
+#   ./load-sample-data.sh        # populates ES with demo indices
+#   ./es2os report --cluster http://localhost:9200   # run the tool!
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.27
+    container_name: es-source
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: curl -s http://localhost:9200 | grep -q cluster_name
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    container_name: os-target
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9201:9200"
+    healthcheck:
+      test: curl -s http://localhost:9200 | grep -q cluster_name
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -1,0 +1,179 @@
+{
+  "product_embeddings": {
+    "mappings": {
+      "properties": {
+        "title": { "type": "text", "analyzer": "standard" },
+        "description": { "type": "text" },
+        "product_vector": {
+          "type": "dense_vector",
+          "dims": 768,
+          "index": true,
+          "similarity": "cosine"
+        },
+        "category": { "type": "keyword" },
+        "price": { "type": "float" },
+        "created_at": { "type": "date" }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "3",
+        "number_of_replicas": "1",
+        "knn": true,
+        "knn.algo_param.ef_search": "512"
+      }
+    }
+  },
+  "semantic_search": {
+    "mappings": {
+      "properties": {
+        "content": { "type": "text" },
+        "content_embedding": {
+          "type": "dense_vector",
+          "dims": 1536,
+          "index": true,
+          "similarity": "dot_product"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "source": { "type": "keyword" },
+            "timestamp": { "type": "date" }
+          }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "5",
+        "number_of_replicas": "2",
+        "knn": true
+      }
+    }
+  },
+  "legacy_content": {
+    "mappings": {
+      "article": {
+        "properties": {
+          "title": { "type": "text" },
+          "body": { "type": "text" },
+          "author": { "type": "keyword" },
+          "published_at": { "type": "date" }
+        }
+      },
+      "comment": {
+        "properties": {
+          "body": { "type": "text" },
+          "user": { "type": "keyword" },
+          "article_id": { "type": "keyword" },
+          "created_at": { "type": "date" }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "2",
+        "number_of_replicas": "1",
+        "mapper.dynamic": "true"
+      }
+    }
+  },
+  "audit_logs": {
+    "mappings": {
+      "_source": { "enabled": false },
+      "properties": {
+        "timestamp": { "type": "date" },
+        "user_id": { "type": "keyword" },
+        "action": { "type": "keyword" },
+        "resource": { "type": "text" },
+        "ip_address": { "type": "ip" },
+        "session_id": { "type": "keyword" }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "6",
+        "number_of_replicas": "1",
+        "soft_deletes.enabled": "true",
+        "lifecycle.name": "hot_warm_cold_90d"
+      }
+    }
+  },
+  "multilingual_docs": {
+    "mappings": {
+      "properties": {
+        "title_ja": {
+          "type": "text",
+          "analyzer": "kuromoji_analyzer"
+        },
+        "title_zh": {
+          "type": "text",
+          "analyzer": "icu_analyzer"
+        },
+        "title_en": {
+          "type": "text",
+          "analyzer": "standard"
+        },
+        "content": { "type": "text" },
+        "tags": { "type": "keyword" },
+        "locale": { "type": "keyword" }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "3",
+        "number_of_replicas": "1"
+      },
+      "analysis": {
+        "analyzer": {
+          "kuromoji_analyzer": {
+            "type": "custom",
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": ["kuromoji_baseform", "kuromoji_stemmer", "lowercase"]
+          },
+          "icu_analyzer": {
+            "type": "custom",
+            "tokenizer": "icu_tokenizer",
+            "filter": ["icu_folding", "lowercase"]
+          }
+        }
+      }
+    }
+  },
+  "logs_2024_01": {
+    "mappings": {
+      "properties": {
+        "timestamp": { "type": "date" },
+        "level": { "type": "keyword" },
+        "message": { "type": "text" },
+        "service": { "type": "keyword" },
+        "trace_id": { "type": "keyword" },
+        "host": { "type": "keyword" }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "3",
+        "number_of_replicas": "1"
+      }
+    }
+  },
+  "logs_2024_02": {
+    "mappings": {
+      "properties": {
+        "timestamp": { "type": "date" },
+        "level": { "type": "keyword" },
+        "message": { "type": "text" },
+        "service": { "type": "keyword" },
+        "trace_id": { "type": "keyword" },
+        "host": { "type": "keyword" }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "3",
+        "number_of_replicas": "1"
+      }
+    }
+  }
+}
