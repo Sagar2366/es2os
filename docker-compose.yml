@@ -1,5 +1,3 @@
-version: '3.8'
-
 # OpenSearchCon India 2026 Demo
 # ES 7.17 (source) → OpenSearch 2.19 (target) via Logstash
 #
