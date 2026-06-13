@@ -1,0 +1,240 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║         OpenSearchCon India 2026 - Demo Setup & Instructions             ║
+║                                                                           ║
+║   "The Leapfrog Migration Playbook: Escaping Proprietary Search           ║
+║    Without Breaking Production"                                          ║
+║                                                                           ║
+║   Date: Monday June 15, 2026 3:00pm - 3:40pm IST (40 minutes)            ║
+║   Speakers: Sagar Utekar (CrowdStrike) & Sakshi Nasha                    ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+📖 HOW TO USE THIS REPOSITORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FIRST TIME SETUP (Before the talk - 30 minutes):
+
+1. Read this file (you're reading it now!)
+
+2. Read the complete guide:
+   → Open: OPENSEARCHCON_INDIA_2026_COMPLETE_GUIDE.md
+   → This is your 40-min breakdown with every command
+
+3. Run the setup verification:
+   → bash setup-demo.sh
+   → Checks all prerequisites and builds anything missing
+   → Should show all ✓ checks
+
+4. Print the cheat sheet:
+   → TALK_CHEAT_SHEET.md
+   → Print this! Keep it on stage
+   → Has all commands in copy/paste format
+
+5. Verify everything works:
+   → docker ps  (should show 4 containers)
+   → ./es2os version  (should work)
+   → curl http://localhost:9200  (should respond)
+
+READY TO DEMO ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 WHAT YOU GET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FILES YOU NEED:
+
+  START_HERE.txt (this file)
+    → Overview and quick reference
+
+  OPENSEARCHCON_INDIA_2026_COMPLETE_GUIDE.md (MAIN GUIDE)
+    → Read this first
+    → 604 lines, complete 40-min breakdown
+    → Every command explained
+    → All phases covered: Analysis → Transform → Cutover
+
+  TALK_CHEAT_SHEET.md (PRINT & LAMINATE THIS!)
+    → One-page reference for the stage
+    → Copy/paste ready commands
+    → Q&A answers
+    → Troubleshooting guide
+
+  README_OPENSEARCHCON_2026.md
+    → Documentation index
+    → File organization
+    → Timeline expectations
+    → Recording guide
+
+AUTOMATION SCRIPTS:
+
+  setup-demo.sh
+    → Run this to verify everything
+    → Builds es2os if needed
+    → Starts services
+    → Tests connectivity
+
+CODE & CONFIGS:
+
+  es2os (binary)
+    → Pre-built migration analyzer
+    → Detects ES → OS compatibility issues
+
+  docker-compose.yml
+    → Full stack: ES 7.17 + OpenSearch 2.19 + Logstash
+    → One command to start everything
+
+  logstash/pipelines/migrate-all.conf
+    → Production-ready migration pipeline
+    → Handles batching, retries, metadata preservation
+
+  load-sample-data.sh
+    → Creates test indices with sample data
+    → Demonstrates dense_vector → knn_vector issue
+
+  testdata/es7_full_cluster.json
+    → Sample ES cluster for analysis
+    → Shows all issue types
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱️ QUICK START (TL;DR - 5 MINUTES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd ~/Desktop/es2os
+bash setup-demo.sh
+# Wait for all ✓ checks
+
+print TALK_CHEAT_SHEET.md
+
+Done! You're ready to demo.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎬 ON STAGE SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TERMINAL 1 (MAIN - Run commands from TALK_CHEAT_SHEET.md):
+  $ cd ~/Desktop/es2os
+  $ ./es2os report --file testdata/es7_full_cluster.json
+  $ ./es2os transform --file testdata/es7_full_cluster.json | jq
+  $ open http://localhost:5601
+
+TERMINAL 2 (LOGS - Leave running):
+  $ docker logs -f logstash-migration | grep -E "Migrated|Index|error"
+
+TERMINAL 3 (BROWSER):
+  → http://localhost:5601 (OpenSearch Dashboards)
+  → http://localhost:9200 (ES curl if needed)
+  → http://localhost:9201 (OS curl if needed)
+
+PRINTED: TALK_CHEAT_SHEET.md (laminated!)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱️ TIME BREAKDOWN (40 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+0:00-2:00   Opening & Problem Statement
+            "The migration feels impossible..."
+
+2:00-10:00  PHASE 1: Analysis
+            → es2os report (what will break)
+            → es2os transform (dense_vector fix)
+            → HTML report generation
+
+10:00-20:00 PHASE 2: Transformation & Migration
+            → Show Docker services
+            → Show Logstash pipeline
+            → Check migration status
+
+20:00-32:00 PHASE 3: Cutover & Zero-Downtime
+            → Dual-write pattern diagram
+            → Query both clusters
+            → Show OpenSearch Dashboards
+
+32:00-40:00 Closing & Q&A
+            → Rollback strategy
+            → Cost analysis
+            → Audience questions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 IF SOMETHING BREAKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK FIXES:
+
+  Docker services won't start:
+    docker compose down -v
+    docker compose up -d
+    sleep 60
+
+  es2os build failed:
+    go clean -modcache
+    rm go.sum
+    go mod tidy
+    go build -o es2os .
+
+  OpenSearch Dashboards not responding:
+    Wait 2-3 more minutes — normal startup time
+
+  Logstash showing errors:
+    Check network: docker network ls
+
+  Kind cluster (optional demo) taking forever:
+    This is NORMAL — building images takes 20-30 min
+    Skip it and show slides instead if behind on time
+
+See TALK_CHEAT_SHEET.md "TROUBLESHOOTING" section for more.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 FILES TO READ (In This Order)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. START_HERE.txt (you're here)
+2. OPENSEARCHCON_INDIA_2026_COMPLETE_GUIDE.md (read this fully)
+3. README_OPENSEARCHCON_2026.md (reference)
+4. TALK_CHEAT_SHEET.md (print this)
+
+Then:
+
+5. DEMO_GUIDE_TALK.md (event structure)
+6. LOGSTASH_VS_BEATS.md (Q&A reference)
+7. FINAL_STATUS.md (wrap-up)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CHECKLIST (30 MIN BEFORE TALK)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Run setup-demo.sh (all ✓ checks should pass)
+□ docker ps shows 4 containers running
+□ curl http://localhost:9200 responds
+□ curl http://localhost:9201 responds  
+□ ./es2os version works
+□ Open http://localhost:5601 in browser
+□ Print TALK_CHEAT_SHEET.md
+□ Have backup slide deck ready
+□ Terminal 1: Ready for commands
+□ Terminal 2: docker logs running
+□ Terminal 3: Browser with dashboards open
+
+All set? You're ready! 🚀
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 SOCIAL LINKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GitHub:  https://github.com/Sagar2366/es2os
+Issues:  https://github.com/Sagar2366/es2os/issues
+Docs:    https://opensearch.org/docs/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GOOD LUCK AT OPENSEARCHCON INDIA 2026! 🚀
+
+Generated: June 13, 2026
+Status: ✅ Ready
