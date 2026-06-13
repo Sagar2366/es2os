@@ -1,0 +1,5 @@
+- pipeline.id: migrate-es-to-os
+  path.config: "/usr/share/logstash/pipeline/migrate-all.conf"
+  pipeline.workers: 2
+  pipeline.batch.size: 500
+  pipeline.batch.delay: 5
