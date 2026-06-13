@@ -1,0 +1,81 @@
+version: '3.8'
+
+# OpenSearchCon India 2026 Demo
+# ES 7.17 (source) → OpenSearch 2.19 (target) via Logstash
+#
+# Usage:
+#   docker compose up -d
+#   bash load-sample-data.sh
+#   # Watch migration: docker logs -f logstash-migration
+
+services:
+  es-source:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.27
+    container_name: es-source
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    networks:
+      - migration-net
+    healthcheck:
+      test: curl -s http://localhost:9200/_cluster/health | grep -qE '"status":"(green|yellow)"'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  os-target:
+    image: opensearchproject/opensearch:2.19.0
+    container_name: os-target
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+    ports:
+      - "9201:9200"
+    networks:
+      - migration-net
+    healthcheck:
+      test: curl -s http://localhost:9200/_cluster/health | grep -qE '"status":"(green|yellow)"'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  os-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.19.0
+    container_name: os-dashboards
+    environment:
+      - "OPENSEARCH_HOSTS=http://os-target:9200"
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+    ports:
+      - "5601:5601"
+    networks:
+      - migration-net
+    depends_on:
+      os-target:
+        condition: service_healthy
+
+  logstash-migration:
+    image: docker.elastic.co/logstash/logstash:7.17.27
+    container_name: logstash-migration
+    volumes:
+      - ./logstash/pipelines:/usr/share/logstash/pipeline:ro
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+      - "XPACK_MONITORING_ENABLED=false"
+    networks:
+      - migration-net
+    depends_on:
+      es-source:
+        condition: service_healthy
+      os-target:
+        condition: service_healthy
+    # Logstash starts immediately but only migrates data that exists
+    # Re-run load-sample-data.sh to trigger migration of new indices
+
+networks:
+  migration-net:
+    driver: bridge
