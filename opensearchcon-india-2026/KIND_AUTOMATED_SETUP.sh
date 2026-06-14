@@ -141,31 +141,18 @@ source localTestingCommon.sh 2>/dev/null || true
 # Create namespace
 kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f - 2>/dev/null || true
 
-# Run build with timeout
+# Run build without timeout (just let it run)
 echo -e "${YELLOW}Starting image builds...${NC}"
 
-timeout 50m bash localTestingKind.sh 2>&1 | tee /tmp/ma-build.log > /dev/null &
-BUILD_PID=$!
+bash localTestingKind.sh 2>&1 | tee /tmp/ma-build.log
+BUILD_RESULT=${PIPESTATUS[0]}
 
-# Monitor progress
-LAST_CHECK=""
-while kill -0 $BUILD_PID 2>/dev/null; do
-  CURRENT=$(tail -1 /tmp/ma-build.log 2>/dev/null | grep -oE "(Building|Step|FROM|RUN|COPY|Pushing)" | head -1 || echo "Building...")
-  
-  if [ "$CURRENT" != "$LAST_CHECK" ]; then
-    echo -e "${BLUE}  Progress: $CURRENT${NC}"
-    LAST_CHECK="$CURRENT"
-  fi
-  
-  sleep 30
-done
-
-wait $BUILD_PID || {
+if [ $BUILD_RESULT -ne 0 ]; then
   echo -e "${RED}✗ Build failed${NC}"
   echo -e "${YELLOW}Last 50 lines of log:${NC}"
   tail -50 /tmp/ma-build.log
   exit 1
-}
+fi
 
 echo -e "${GREEN}✓ Images built successfully${NC}"
 echo ""
