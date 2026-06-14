@@ -1,35 +1,48 @@
 # OpenSearchCon India 2026 - Demo Setup
 
-## Two Options
+## Recommended: Docker Desktop Kubernetes + Simple Pods (FIXED)
 
-### Option 1: Docker Desktop Kubernetes + Helm (RECOMMENDED - 20 min)
 ```bash
 chmod +x DOCKER_DESKTOP_K8S_HELM.sh
 ./DOCKER_DESKTOP_K8S_HELM.sh
 ```
 
-### Option 2: Docker Desktop Kubernetes + Build from Source (40-50 min)
+**What it does:**
+- Pre-pulls Docker images locally (avoids Docker Desktop image pull issues)
+- Deploys Elasticsearch 8.5 + OpenSearch 2.13 as simple Kubernetes pods
+- Loads sample data
+- Ready in ~5-10 minutes
+
+**Note:** This version is fixed to work reliably with Docker Desktop Kubernetes by:
+1. Pre-pulling images to local Docker first
+2. Using simple pod deployments instead of Helm charts
+3. Handling resource constraints properly
+
+---
+
+## Alternative: Build from Source (40-50 min)
+
 ```bash
 chmod +x DOCKER_DESKTOP_K8S_BUILD_SOURCE.sh
 ./DOCKER_DESKTOP_K8S_BUILD_SOURCE.sh
 ```
 
-### Option 3: Kind Cluster (60 min)
+---
+
+## Alternative: Kind Cluster (60 min)
+
 ```bash
 chmod +x KIND_AUTOMATED_SETUP.sh
 ./KIND_AUTOMATED_SETUP.sh
 ```
 
-## Prerequisites
-- Docker Desktop with Kubernetes enabled
-- kubectl installed
-- For Option 2: Java JDK 17
+---
 
 ## After Setup - 4 Terminal Demo
 
 **Terminal 1:**
 ```bash
-kubectl port-forward -n migration svc/elasticsearch-master 9200:9200
+kubectl port-forward -n migration svc/elasticsearch 9200:9200
 ```
 
 **Terminal 2:**
@@ -49,5 +62,19 @@ curl http://localhost:9201/_cat/indices
 curl http://localhost:9201/products/_search | jq
 ```
 
-## Recommendation for Your Talk
-Use **Option 1** - it's the fastest and most reliable for a live demo.
+---
+
+## Prerequisites
+
+- Docker Desktop with Kubernetes enabled
+- kubectl installed
+- 512MB+ free memory
+
+---
+
+## Recommendation
+
+**For your OpenSearchCon talk:** Use the first option (DOCKER_DESKTOP_K8S_HELM.sh)
+- Fastest and most reliable
+- Works with Docker Desktop image pulling
+- Ready in 5-10 minutes
