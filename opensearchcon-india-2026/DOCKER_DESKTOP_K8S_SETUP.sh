@@ -1,7 +1,7 @@
 #!/bin/bash
 # ════════════════════════════════════════════════════════════════════════════════
 # DOCKER DESKTOP KUBERNETES SETUP - OpenSearchCon India 2026
-# Simple, faster alternative to Kind
+# Robust, self-patching alternative to Kind for local demo setups
 # ════════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -42,6 +42,14 @@ if ! command -v kubectl &> /dev/null; then
   exit 1
 fi
 echo -e "${GREEN}  ✓ kubectl installed${NC}"
+
+# Force context switch to docker-desktop explicitly before starting
+if kubectl config get-contexts | grep -q "docker-desktop"; then
+  kubectl config use-context docker-desktop > /dev/null 2>&1
+else
+  echo -e "${RED}✗ docker-desktop context not found in kubeconfig.${NC}"
+  exit 1
+fi
 
 # Verify Kubernetes cluster is running
 if ! kubectl cluster-info &> /dev/null; then
@@ -116,7 +124,7 @@ echo -e "${GREEN}✓ Migration Assistant ready${NC}"
 echo ""
 
 # ════════════════════════════════════════════════════════════════════════════════
-# PHASE 5: BUILD & DEPLOY IMAGES
+# PHASE 5: BUILD & DEPLOY IMAGES (WITH LIVE CONTEXT HIJACK PATCH)
 # ════════════════════════════════════════════════════════════════════════════════
 echo -e "${YELLOW}PHASE 5: Building and deploying images (20-30 min)...${NC}"
 echo -e "${BLUE}This is the main wait. Coffee time! ☕${NC}"
@@ -127,7 +135,7 @@ export JAVA_HOME=$(dirname $(dirname $(which java 2>/dev/null) 2>/dev/null) 2>/d
 if [ ! -f "$MIGRATIONS_DIR/deployment/k8s/localTestingDockerDesktop.sh" ]; then
   # Try the generic script
   if [ -f "$MIGRATIONS_DIR/deployment/k8s/localTestingKind.sh" ]; then
-    echo -e "${YELLOW}  Using Kind script for Docker Desktop...${NC}"
+    echo -e "${YELLOW}  Using Kind script architecture for Docker Desktop context...${NC}"
     SCRIPT_FILE="localTestingKind.sh"
   else
     echo -e "${RED}✗ Deployment scripts not found${NC}"
@@ -138,6 +146,23 @@ else
 fi
 
 cd $MIGRATIONS_DIR/deployment/k8s
+
+# ─── HOTPATCH INTERNAL REPO FILES TO REMOVE HARDCODED KIND CONTEXTS ───
+echo -e "${YELLOW}  Patching internal deployment files to use docker-desktop context...${NC}"
+export KUBE_CONTEXT="docker-desktop"
+export kube_context="docker-desktop"
+
+# Cross-platform compatibility for sed inline execution (macOS vs Linux)
+if [ "$(uname)" == "Darwin" ]; then
+  sed -i '' 's/kind-migration-assistant/docker-desktop/g' localTestingCommon.sh 2>/dev/null || true
+  sed -i '' 's/kind-migration-assistant/docker-desktop/g' localTestingKind.sh 2>/dev/null || true
+  sed -i '' 's/kind-migration-assistant/docker-desktop/g' buildImages/backends/k8sHostedBuildkit.sh 2>/dev/null || true
+else
+  sed -i 's/kind-migration-assistant/docker-desktop/g' localTestingCommon.sh 2>/dev/null || true
+  sed -i 's/kind-migration-assistant/docker-desktop/g' localTestingKind.sh 2>/dev/null || true
+  sed -i 's/kind-migration-assistant/docker-desktop/g' buildImages/backends/k8sHostedBuildkit.sh 2>/dev/null || true
+fi
+# ──────────────────────────────────────────────────────────────────────
 
 # Source common setup
 source localTestingCommon.sh 2>/dev/null || true
