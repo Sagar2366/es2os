@@ -1,0 +1,211 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║         OpenSearchCon India 2026 - KIND Cluster Execution Checklist            ║
+║                    June 15, 2026 - "The Leapfrog Migration"                    ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+LOCATION: ~/es2os/opensearchcon-india-2026/
+
+════════════════════════════════════════════════════════════════════════════════
+60 MINUTES BEFORE YOUR TALK - SETUP PHASE
+════════════════════════════════════════════════════════════════════════════════
+
+□ 1. Open Terminal (main setup terminal)
+     cd ~/es2os/opensearchcon-india-2026
+     chmod +x KIND_AUTOMATED_SETUP.sh
+
+□ 2. Start Setup
+     ./KIND_AUTOMATED_SETUP.sh
+     
+     Output will show:
+     - Checking prerequisites (kind, kubectl, docker)
+     - Cleaning up old clusters
+     - Creating new Kind cluster (5 min)
+     - Building images (30-40 min wait)
+     - Deploying pods (10 min)
+     - Loading sample data
+
+□ 3. Monitor Progress
+     - Script shows real-time progress
+     - Main wait is "Building images" (30-40 min)
+     - Completely automated - no interaction needed
+     - You can leave it running and prepare other things
+
+□ 4. Wait for Success Message
+     
+     ✓ SETUP COMPLETE
+     READY FOR DEMO!
+     
+     Cluster Status:
+     NAME                           READY   STATUS
+     migration-console-0            1/1     Running
+     elasticsearch-master-0         1/1     Running
+     opensearch-cluster-master-0    1/1     Running
+
+════════════════════════════════════════════════════════════════════════════════
+30 MINUTES BEFORE YOUR TALK - VERIFICATION PHASE
+════════════════════════════════════════════════════════════════════════════════
+
+□ 1. Verify All Pods Running
+     kubectl get pods -n migration
+     
+     Expected: All 3 pods show "1/1" and "Running"
+
+□ 2. Check for Any Errors
+     kubectl logs -n migration -l app=migration-console | grep -i error
+     
+     Expected: No output (or only benign warnings)
+
+□ 3. Verify Data in Elasticsearch
+     kubectl exec migration-console-0 -n migration -- \
+       curl -s -k -u admin:admin https://elasticsearch-master:9200/_cat/indices
+     
+     Expected: See "product_embeddings" and "logs_2024_01" indices
+
+□ 4. Verify Data in OpenSearch
+     kubectl exec migration-console-0 -n migration -- \
+       curl -s -k -u admin:admin https://opensearch-cluster-master:9200/_cat/indices
+     
+     Expected: See "product_embeddings" and "logs_2024_01" indices
+
+□ 5. Verify Workflow Status
+     kubectl exec migration-console-0 -n migration -- bash
+     workflow status
+     exit
+     
+     Expected: Shows "Completed" or "Running" (not "Failed")
+
+✓ ALL CHECKS PASSED? → You're ready to demo!
+
+════════════════════════════════════════════════════════════════════════════════
+10 MINUTES BEFORE YOUR TALK - DEMO SETUP PHASE
+════════════════════════════════════════════════════════════════════════════════
+
+Open these 4 terminals BEFORE you start your talk:
+
+□ Terminal 1: Watch Migration Logs
+   kubectl logs -n migration -l app=migration-console --all-containers -f
+   
+   (Leave this running - point at screen during talk to show activity)
+
+□ Terminal 2: Access Migration Console
+   kubectl exec -it migration-console-0 -n migration -- bash
+   
+   (You can type "workflow status" and "workflow logs" here during talk)
+
+□ Terminal 3: Query Elasticsearch (Source)
+   kubectl port-forward -n migration svc/elasticsearch-master 9200:9200
+   
+   (In another shell: curl -k https://admin:admin@localhost:9200/_cat/indices)
+
+□ Terminal 4: Query OpenSearch (Target)
+   kubectl port-forward -n migration svc/opensearch-cluster-master 9201:9200
+   
+   (In another shell: curl -k https://admin:admin@localhost:9201/_cat/indices)
+
+✓ ALL TERMINALS READY? → Start your talk!
+
+════════════════════════════════════════════════════════════════════════════════
+DURING YOUR TALK - DEMO COMMANDS
+════════════════════════════════════════════════════════════════════════════════
+
+Use KIND_SIMPLE_GUIDE.md for all demo commands.
+
+Key sections in that file:
+- "DURING YOUR TALK - DEMO COMMANDS" ← Copy/paste these
+- "QUICK REFERENCE CARD" ← Print this out and keep by laptop
+
+════════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING - If Something Goes Wrong
+════════════════════════════════════════════════════════════════════════════════
+
+PROBLEM: "Docker daemon not running"
+ACTION:  open -a Docker    (macOS)
+         systemctl start docker    (Linux)
+
+PROBLEM: "kind: command not found"
+ACTION:  brew install kind
+         Then run: ./KIND_AUTOMATED_SETUP.sh again
+
+PROBLEM: Build stuck after 20 minutes
+ACTION:  Check: tail -f /tmp/ma-build.log
+         If completely stuck: 
+         kind delete cluster --name opensearchcon-2026
+         ./KIND_AUTOMATED_SETUP.sh
+
+PROBLEM: Pod shows "ImagePullBackOff" or "Pending"
+ACTION:  kubectl describe pod migration-console-0 -n migration
+         If still broken:
+         kind delete cluster --name opensearchcon-2026
+         docker system prune -a
+         ./KIND_AUTOMATED_SETUP.sh
+
+PROBLEM: "workflow status" returns nothing
+ACTION:  Wait 2-3 minutes (workflow is still initializing)
+         Or check: kubectl logs -n migration -l app=migration-console
+
+════════════════════════════════════════════════════════════════════════════════
+REFERENCE FILES IN opensearchcon-india-2026/
+════════════════════════════════════════════════════════════════════════════════
+
+KIND_AUTOMATED_SETUP.sh
+  ← THE SCRIPT YOU RUN (60 min before talk)
+  
+KIND_SIMPLE_GUIDE.md
+  ← USE THIS DURING TALK (print it out!)
+  
+README_KIND_DEMO.md
+  ← Quick overview of what to do
+  
+KIND_EXECUTION_GUIDE.md
+  ← Optional detailed reference (if something fails)
+
+════════════════════════════════════════════════════════════════════════════════
+QUICK TIMELINE
+════════════════════════════════════════════════════════════════════════════════
+
+T-60 min: Run ./KIND_AUTOMATED_SETUP.sh
+T-50 min: Building images (30-40 min wait - grab coffee!)
+T-15 min: Pods coming online
+T-10 min: Sample data loaded
+T-5 min:  Run verification checklist (see 30-min section above)
+T-3 min:  Open 4 demo terminals (see 10-min section above)
+T-0 min:  Start your talk!
+
+════════════════════════════════════════════════════════════════════════════════
+SUCCESS INDICATORS
+════════════════════════════════════════════════════════════════════════════════
+
+✓ Setup completes with "SETUP COMPLETE" message
+✓ All 3 pods show "Running" status
+✓ No error logs
+✓ Data visible in both ES and OS
+✓ All 4 demo terminals open and ready
+✓ Kind cluster responding to kubectl commands
+
+When you see all these → Your demo is ready!
+
+════════════════════════════════════════════════════════════════════════════════
+KEY REMINDER
+════════════════════════════════════════════════════════════════════════════════
+
+This is fully automated. You don't need to do anything during setup except:
+1. Run the script
+2. Wait 60 minutes
+3. See the success message
+4. Open 4 terminals for demo
+
+Everything else is automatic!
+
+════════════════════════════════════════════════════════════════════════════════
+
+Questions? Read:
+- README_KIND_DEMO.md (overview)
+- KIND_SIMPLE_GUIDE.md (commands to use during talk)
+- KIND_EXECUTION_GUIDE.md (detailed reference if needed)
+
+All files pushed to GitHub:
+https://github.com/Sagar2366/es2os/tree/main/opensearchcon-india-2026
+
+════════════════════════════════════════════════════════════════════════════════
+                    GOOD LUCK WITH YOUR TALK! 🚀
+════════════════════════════════════════════════════════════════════════════════
