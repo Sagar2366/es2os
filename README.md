@@ -4,7 +4,7 @@
 
 Live migration demo: Elasticsearch 7.17 → OpenSearch 2.19 with zero downtime.
 
-## Quick Start
+## Quick Start up
 
 ```bash
 # Start the full stack (ES 7.17 + OpenSearch 2.19 + Logstash + Dashboards)
