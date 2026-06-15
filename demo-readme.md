@@ -5,24 +5,8 @@ Live demo for **The Leapfrog Migration Playbook: Escaping Proprietary Search Wit
 
 This repository contains the stage-safe Kubernetes demo for migrating from Elasticsearch to OpenSearch using OpenSearch Migration Assistant concepts:
 
-- Metadata migration and `dense_vector` to `knn_vector` transformation
-- Snapshot/backfill story using in-cluster LocalStack/S3
-- Live writes with Kafka-style capture/replay lane using Strimzi
-- Comparative response diffing
-- Client cutover and rollback using Kubernetes Service routing
-- Grafana dashboards for migration visibility
-
-The final demo path is Kubernetes only. Do not use the older Docker Compose/Kibana flow for the live session.
-
-## Demo Folder
-
-Run all commands from this folder:
-
-```bash
-cd /Users/sagarutekar/Desktop/es2os/demo/es2os
-```
-
-## Fresh Cluster Setup
+## Demo
+## Prerequistics:
 
 ```bash
 ./demo-live.sh setup
@@ -52,7 +36,7 @@ Confirms Migration Assistant is ready and can connect to both Elasticsearch and 
 ./demo-live.sh versions
 ```
 
-Prints the actual Elasticsearch, OpenSearch, and Migration Assistant versions. Use this on stage instead of hardcoding versions.
+Prints the actual Elasticsearch, OpenSearch, and Migration Assistant versions.
 
 ## Prepare Visuals
 
